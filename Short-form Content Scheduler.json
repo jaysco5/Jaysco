@@ -1,0 +1,1484 @@
+{
+  "name": "Short-form Content Scheduler",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -20,
+        0
+      ],
+      "id": "1e0ff829-3e6a-4e05-acab-02b9ab052cc5",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc",
+          "mode": "list",
+          "cachedResultName": "Longform Analysis",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "production_status",
+              "lookupValue": "for production"
+            }
+          ]
+        },
+        "options": {
+          "returnFirstMatch": true
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        180,
+        0
+      ],
+      "id": "dbc7f144-6bd2-4d09-82f0-62fea79c5acf",
+      "name": "Get Longform",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "q3EMkIQnwjDZ9Xcu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Step 1: Get Longform",
+        "height": 80,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        20
+      ],
+      "id": "4cacc75d-4946-4601-9ea1-e5f0057f2d6c",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.klap.app/v2/tasks/video-to-shorts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"source_video_url\": \"{{ $json.longform_links }}\",\n  \"language\": \"en\",\n  \"target_clip_count\": 4,\n  \"max_clip_count\": 4,\n\n  \"editing_options\": {\n    \"captions\": true,\n    \"reframe\": true,\n    \"emojis\": true,\n    \"remove_silences\": true,\n    \"intro_title\": false\n  },\n\n  \"dimensions\": {\n    \"width\": 1080,\n    \"height\": 1920\n  },\n\n  \"min_duration\": 15,\n  \"max_duration\": 60,\n  \"target_duration\": 30\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        180
+      ],
+      "id": "e488b88b-f00f-4f33-ba50-dc447934f630",
+      "name": "Analyze Longform",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "X3QZthrTYUpFwRYi",
+          "name": "Klap Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        180
+      ],
+      "id": "5e3748df-e7f8-4cd5-bba3-57666c3e7e8d",
+      "name": "Wait",
+      "webhookId": "69fba21d-68cd-4adb-bb76-c1915d109d04"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.klap.app/v2/tasks/{{ $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        380,
+        180
+      ],
+      "id": "b3be8542-110a-428c-bbca-0d084ef7d392",
+      "name": "Get Status",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "X3QZthrTYUpFwRYi",
+          "name": "Klap Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "e7ab1030-34ec-4f84-8b01-f28993acb941",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ready",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        580,
+        180
+      ],
+      "id": "9d567ca8-ccbd-4c3b-881d-4f14658d40de",
+      "name": "Ready?"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.klap.app/v2/projects/{{ $json.output_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        780,
+        180
+      ],
+      "id": "f78b9f86-b609-4d4b-99fe-ede55b8ed2bd",
+      "name": "Get Shorts Details",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "X3QZthrTYUpFwRYi",
+          "name": "Klap Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.klap.app/v2/projects/{{ $('Get Shorts Details').item.json.folder_id }}/{{ $('Get Shorts Details').item.json.id }}/exports",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"preset_id\": \"123\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -20,
+        340
+      ],
+      "id": "d4929900-1e23-4047-8230-7b2b9be3ebd1",
+      "name": "Export Shorts",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "X3QZthrTYUpFwRYi",
+          "name": "Klap Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "unit": "minutes"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        180,
+        340
+      ],
+      "id": "bcd4a885-308b-4e7f-8919-8f40c4afd272",
+      "name": "Wait1",
+      "webhookId": "ee224a2e-c7c4-4f2a-bdf1-e61e0f995cfe"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.klap.app/v2/projects/{{ $json.folder_id }}/{{  $json.id }}/exports/{{  $json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        380,
+        340
+      ],
+      "id": "4a5dd2c9-a2e9-4725-92bb-4bf0dc53405e",
+      "name": "Get Shorts",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "X3QZthrTYUpFwRYi",
+          "name": "Klap Credential"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b2adef4f-356a-4372-b476-1221a38b90e4",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ready",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        580,
+        340
+      ],
+      "id": "4afe0cea-9e27-4f7b-aa48-c53366a364eb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc",
+          "mode": "list",
+          "cachedResultName": "Longform Analysis",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "production_status": "done",
+            "id": "={{ $('Get Longform').first().json.id }}",
+            "date_produced": "={{ new Date().toISOString().split('T')[0] }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "longform_links",
+              "displayName": "longform_links",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "production_status",
+              "displayName": "production_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_produced",
+              "displayName": "date_produced",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        780,
+        340
+      ],
+      "id": "c89c24b1-f004-49b4-bed7-c78e151101a4",
+      "name": "Update Longform Status",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "q3EMkIQnwjDZ9Xcu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc",
+          "mode": "list",
+          "cachedResultName": "Longform Analysis",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1465873743,
+          "mode": "list",
+          "cachedResultName": "Sheet2",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1MQUIDM7mQ9bC012F3tk3xngUoOkwLAlmcLaw7ZM1eVc/edit#gid=1465873743"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "shortform_links": "={{ $('Get Shorts').item.json.src_url }}",
+            "tiktok_caption": "={{ $('Get Shorts Details').item.json.publication_captions.tiktok }}",
+            "youtube_caption": "={{ $('Get Shorts Details').item.json.publication_captions.youtube }}",
+            "instagram_caption": "={{ $('Get Shorts Details').item.json.publication_captions.instagram }}",
+            "publishing_status": "for publishing",
+            "date_published": "={{ new Date().toISOString().split('T')[0] }}",
+            "id": "==ROW()-1",
+            "linkedin_captions": "={{ $('Get Shorts Details').item.json.publication_captions.linkedin }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shortform_links",
+              "displayName": "shortform_links",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tiktok_caption",
+              "displayName": "tiktok_caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "instagram_caption",
+              "displayName": "instagram_caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "youtube_caption",
+              "displayName": "youtube_caption",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "linkedin_captions",
+              "displayName": "linkedin_captions",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "publishing_status",
+              "displayName": "publishing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "date_published",
+              "displayName": "date_published",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        -20,
+        520
+      ],
+      "id": "35de157f-dacd-4887-b130-91f8ff447c65",
+      "name": "Log Shorts",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "q3EMkIQnwjDZ9Xcu",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Step 2: Analyze Longform",
+        "height": 80
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        200
+      ],
+      "id": "eb51feef-9255-4fe3-8602-ac218c5a870b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "Step 3: Produce Shorts",
+        "height": 80,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        360
+      ],
+      "id": "0f5035fb-a8b5-498a-ae9c-4b7cd596764a",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "Step 4: Publish Shorts",
+        "height": 80,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -340,
+        540
+      ],
+      "id": "4c9b1e5b-41a9-490b-a8a2-8ba36091c0d7",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "mode": "raw",
+        "jsonOutput": "{\n    \"instagram\": \"7922\",\n    \"youtube\": \"6859\",\n    \"tikok\": \"10422\",\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        180,
+        520
+      ],
+      "id": "d89569ce-15d9-43a9-b485-6d516d5b44cc",
+      "name": "Set Blotato IDs"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://backend.blotato.com/v2/media",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "blt_MuxWcAfUBm7s6/mTJ78WmEvqKwaST+rztOTE4RdXlUo="
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Log Shorts').item.json.shortform_links }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        380,
+        520
+      ],
+      "id": "7c811923-71ee-4de1-85bd-12f37976867d",
+      "name": "Load Shorts"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://backend.blotato.com/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "blt_MuxWcAfUBm7s6/mTJ78WmEvqKwaST+rztOTE4RdXlUo="
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n    \"post\": {\n      \"target\": {\n        \"targetType\": \"instagram\"\n      },\n      \"content\": {\n        \"text\": \"{{ $('Get Shorts Details').item.json.publication_captions.instagram }}\",\n        \"platform\": \"instagram\",\n        \"mediaUrls\": [\"{{  $json.url }}\"]\n      },\n      \"accountId\": \"{{ $('Set Blotato IDs').item.json.instagram }}\"\n    }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        600
+      ],
+      "id": "e30283a3-2c62-459d-ad72-db9405963a86",
+      "name": "INSTAGRAM",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oIUm8q1P7ZB4MSJ4",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://backend.blotato.com/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "blt_MuxWcAfUBm7s6/mTJ78WmEvqKwaST+rztOTE4RdXlUo="
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"post\": {\n    \"target\": {\n      \"targetType\": \"youtube\",\n      \"title\": {{ JSON.stringify($('Youtube Title').item.json.youtube_title) }},\n      \"privacyStatus\": \"public\",\n      \"shouldNotifySubscribers\": false\n    },\n    \"content\": {\n      \"text\": \"{{ $('Get Shorts Details').item.json.publication_captions.youtube }}\",\n      \"platform\": \"youtube\",\n      \"mediaUrls\": [\"{{ $json.url }}\"]\n    },\n    \"accountId\": \"{{ $('Set Blotato IDs').item.json.youtube }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        800
+      ],
+      "id": "10f3f1c1-d098-4c2d-a92b-3e23601e36bc",
+      "name": "YOUTUBE",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oIUm8q1P7ZB4MSJ4",
+          "name": "Header Auth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a0aced90-80c2-4be0-923c-6071f7f85ee0",
+              "name": "youtube_title",
+              "value": "={{ \n  (() => {\n    const fullTitle = $('Get Shorts Details').item.json.publication_captions.youtube || '';\n    \n    if (fullTitle.length <= 100) return fullTitle;\n\n    const keywords = ['AI', 'business', 'marketing', 'strategy', 'growth', 'tips', 'insights', 'founder', 'startup'];\n    const altTitle = 'Top Insights for Creators from Industry Leaders';\n\n    return altTitle;\n  })()\n}}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        940,
+        180
+      ],
+      "id": "fb8494c1-838e-476d-80ae-3c7e166c607f",
+      "name": "Youtube Title"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://backend.blotato.com/v2/posts",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "blotato-api-key",
+              "value": "blt_MuxWcAfUBm7s6/mTJ78WmEvqKwaST+rztOTE4RdXlUo="
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n \"post\": {\n   \"target\": {\n     \"targetType\": \"tiktok\",\n     \"isYourBrand\": false,\n     \"disabledDuet\": false,\n     \"privacyLevel\": \"PUBLIC_TO_EVERYONE\",\n     \"isAiGenerated\": false,\n     \"disabledStitch\": false,\n     \"disabledComments\": false,\n     \"isBrandedContent\":false\n    },\n    \"content\": {\n      \"text\": \"{{ $('Get Shorts Details').item.json.publication_captions.tiktok }}\",\n      \"platform\": \"tiktok\",\n      \"mediaUrls\": [\"{{ $json.url }}\"]\n    },\n    \"accountId\": \"{{ $('Set Blotato IDs').item.json.tikok }}\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        980
+      ],
+      "id": "b1c39c6a-5ada-44b1-9d93-fa9224802bff",
+      "name": "TIKTOK",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "oIUm8q1P7ZB4MSJ4",
+          "name": "Header Auth account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Set Blotato IDs": [
+      {
+        "json": {
+          "instagram": "7922",
+          "youtube": "6859",
+          "tikok": "10422"
+        }
+      },
+      {
+        "json": {
+          "instagram": "7922",
+          "youtube": "6859",
+          "tikok": "10422"
+        }
+      },
+      {
+        "json": {
+          "instagram": "7922",
+          "youtube": "6859",
+          "tikok": "10422"
+        }
+      },
+      {
+        "json": {
+          "instagram": "7922",
+          "youtube": "6859",
+          "tikok": "10422"
+        }
+      }
+    ],
+    "Log Shorts": [
+      {
+        "json": {
+          "shortform_links": "https://storage.googleapis.com/klap-renders/fAZnLwucX5JqFS0a.mp4",
+          "tiktok_caption": "Happiness vs. peace? 🤔 Let's settle this debate! What do YOU think? 💬 #DeepThoughts #PeacefulVibes",
+          "youtube_caption": "Is happiness really all it's cracked up to be? 🤔 Let's talk peace instead! ✌️ #HappinessVsPeace",
+          "instagram_caption": "Happiness is overrated! 😲 Let's chat about peace instead. What's your take? ✌️ #PeaceOverHappiness",
+          "publishing_status": "for publishing",
+          "date_published": "2025-07-21",
+          "id": "=ROW()-1",
+          "linkedin_captions": "Is happiness just a rollercoaster? 🎢 Let's chat about peace instead! ✌️ #HappinessVsPeace"
+        }
+      },
+      {
+        "json": {
+          "shortform_links": "https://storage.googleapis.com/klap-renders/orfqfwr0kxwHyZ7T.mp4",
+          "tiktok_caption": "When cultures collide 😳💔 What’s your take on PDA? Too much or just right? 🤔 #CulturalDifferences",
+          "youtube_caption": "🤔 Is this PDA or just cultural differences? Let's discuss! 💋👇 #CulturalDifferences #PDA",
+          "instagram_caption": "Cultural norms got me like 😳! What's your take on PDA? 🤔💋 #CultureShock #PDA",
+          "publishing_status": "for publishing",
+          "date_published": "2025-07-21",
+          "id": "=ROW()-1",
+          "linkedin_captions": "Kissing or just cultural vibes? 🤔💋 What’s your take on PDA? #CultureShock #Love"
+        }
+      },
+      {
+        "json": {
+          "shortform_links": "https://storage.googleapis.com/klap-renders/q9FppRcVrECcrldA.mp4",
+          "tiktok_caption": "Is happiness just a myth? 😂 Let's chat about peace vs. joy! What do YOU think? 🤔✨ #DeepThoughts #Happiness",
+          "youtube_caption": "Is happiness really all it's cracked up to be? 🤔 Let's dive into the feels! 💭 #HappinessVsSadness #Feelings",
+          "instagram_caption": "Is happiness really worth it? 🤔 Let's chat about the balance! #DeepThoughts #Feelings",
+          "publishing_status": "for publishing",
+          "date_published": "2025-07-21",
+          "id": "=ROW()-1",
+          "linkedin_captions": "Happiness vs. sadness? 🤔 Let's dive deep! Is peace the real goal? 💭💫 #Feelings #DeepTalk"
+        }
+      },
+      {
+        "json": {
+          "shortform_links": "https://storage.googleapis.com/klap-renders/4WTZNLoRaQzXOIiI.mp4",
+          "tiktok_caption": "🌊 Remember when Billie dropped 'Ocean Eyes' at 13? 😱 What a legend! 💚 #BillieEilish #MusicMagic",
+          "youtube_caption": "Did Billie Eilish change the game at 13? 🌊✨ Dive into her early magic! #BillieEilish #OceanEyes",
+          "instagram_caption": "🌊 Remember when Billie dropped 'Ocean Eyes' at just 13? 😱 What a start! #BillieEilish #MusicMagic",
+          "publishing_status": "for publishing",
+          "date_published": "2025-07-21",
+          "id": "=ROW()-1",
+          "linkedin_captions": "🌊 Remember when Billie dropped 'Ocean Eyes' at 13? 😱 What was your fave early jam? #BillieEilish #MusicMagic"
+        }
+      }
+    ],
+    "Schedule Trigger": [
+      {
+        "json": {
+          "timestamp": "2025-07-20T19:58:52.759-07:00",
+          "Readable date": "July 20th 2025, 7:58:52 pm",
+          "Readable time": "7:58:52 pm",
+          "Day of week": "Sunday",
+          "Year": "2025",
+          "Month": "July",
+          "Day of month": "20",
+          "Hour": "19",
+          "Minute": "58",
+          "Second": "52",
+          "Timezone": "America/Los_Angeles (UTC-07:00)"
+        }
+      }
+    ],
+    "Get Longform": [
+      {
+        "json": {
+          "row_number": 8,
+          "id": 7,
+          "longform_links": "https://www.youtube.com/watch?v=wehsmJMUvdw",
+          "production_status": "for production",
+          "date_produced": ""
+        }
+      }
+    ],
+    "Analyze Longform": [
+      {
+        "json": {
+          "id": "QyD0e6rdpjDydJxi",
+          "type": "video-to-shorts",
+          "status": "processing",
+          "error_code": null,
+          "created_at": "2025-07-21T02:58:54.408Z",
+          "output_type": "folder",
+          "output_id": "Rg039NYB"
+        }
+      }
+    ],
+    "Wait": [
+      {
+        "json": {
+          "id": "QyD0e6rdpjDydJxi",
+          "type": "video-to-shorts",
+          "status": "processing",
+          "error_code": null,
+          "created_at": "2025-07-21T02:58:54.408Z",
+          "output_type": "folder",
+          "output_id": "Rg039NYB"
+        }
+      }
+    ],
+    "Get Status": [
+      {
+        "json": {
+          "id": "QyD0e6rdpjDydJxi",
+          "type": "video-to-shorts",
+          "status": "ready",
+          "error_code": null,
+          "created_at": "2025-07-21T02:58:54.408Z",
+          "output_type": "folder",
+          "output_id": "Rg039NYB"
+        }
+      }
+    ],
+    "Ready?": [
+      {
+        "json": {
+          "id": "QyD0e6rdpjDydJxi",
+          "type": "video-to-shorts",
+          "status": "ready",
+          "error_code": null,
+          "created_at": "2025-07-21T02:58:54.408Z",
+          "output_type": "folder",
+          "output_id": "Rg039NYB"
+        }
+      }
+    ],
+    "Get Shorts Details": [
+      {
+        "json": {
+          "id": "LLTWluE7zrv6",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "name": "The Complexity of Happiness vs. Peace",
+          "created_at": "2025-07-21T03:03:12.579+00:00",
+          "virality_score": 75,
+          "virality_score_explanation": "This video presents a thought-provoking perspective on happiness and peace, which can resonate with many viewers. The concise format and strong statement about happiness being overrated can spark discussions and shares, enhancing its virality potential. However, the lack of visual elements or a strong hook may limit its reach compared to more dynamic content.",
+          "publication_captions": {
+            "tiktok": "Happiness vs. peace? 🤔 Let's settle this debate! What do YOU think? 💬 #DeepThoughts #PeacefulVibes",
+            "youtube": "Is happiness really all it's cracked up to be? 🤔 Let's talk peace instead! ✌️ #HappinessVsPeace",
+            "linkedin": "Is happiness just a rollercoaster? 🎢 Let's chat about peace instead! ✌️ #HappinessVsPeace",
+            "instagram": "Happiness is overrated! 😲 Let's chat about peace instead. What's your take? ✌️ #PeaceOverHappiness"
+          },
+          "transcript_text": "Happiness is overrated. I'm just going to say that. And I'm going to keep it quick. Happiness is overrated because in order to be happy, I mean, in order for there to be happiness, there has to be sadness. I feel like it's just better to be peaceful. A"
+        }
+      },
+      {
+        "json": {
+          "id": "WE5TTAKjIHbc",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "name": "Cultural differences in public displays of affection",
+          "created_at": "2025-07-21T03:03:36.135+00:00",
+          "virality_score": 85,
+          "virality_score_explanation": "This video taps into relatable themes of cultural differences and public displays of affection, which can spark discussions and debates among viewers. The humor and casual tone make it engaging, while the short duration keeps it concise and shareable. The potential for audience interaction through comments and shares enhances its virality.",
+          "publication_captions": {
+            "tiktok": "When cultures collide 😳💔 What’s your take on PDA? Too much or just right? 🤔 #CulturalDifferences",
+            "youtube": "🤔 Is this PDA or just cultural differences? Let's discuss! 💋👇 #CulturalDifferences #PDA",
+            "linkedin": "Kissing or just cultural vibes? 🤔💋 What’s your take on PDA? #CultureShock #Love",
+            "instagram": "Cultural norms got me like 😳! What's your take on PDA? 🤔💋 #CultureShock #PDA"
+          },
+          "transcript_text": "I'm not insecure or anything, but is that her fiance kissing on another chick? I'm not trying to be messy or anything, but that's kind of nuts, right? That's not crazy. Maybe the culture is different. I don't know. You're giving her so much. This is a long hug. You don't even understand my nine-year-old self. Another kiss? Hey, this nigga's freaky. Somebody got to watch him. Oh, beautiful. She's 17 here too? Bro, she deserves this much love from you?"
+        }
+      },
+      {
+        "json": {
+          "id": "BtN5C3IfSdf6",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "name": "The complexity of happiness vs. sadness",
+          "created_at": "2025-07-21T03:03:47.611+00:00",
+          "virality_score": 78,
+          "virality_score_explanation": "The video presents a thought-provoking perspective on happiness and sadness, which can resonate with a wide audience. The mention of a teenage band and Billie Eilish adds a relatable pop culture reference, appealing to younger viewers. However, the delivery could be more dynamic to enhance engagement, and the message may not be universally relatable, slightly limiting its virality potential.",
+          "publication_captions": {
+            "tiktok": "Is happiness just a myth? 😂 Let's chat about peace vs. joy! What do YOU think? 🤔✨ #DeepThoughts #Happiness",
+            "youtube": "Is happiness really all it's cracked up to be? 🤔 Let's dive into the feels! 💭 #HappinessVsSadness #Feelings",
+            "linkedin": "Happiness vs. sadness? 🤔 Let's dive deep! Is peace the real goal? 💭💫 #Feelings #DeepTalk",
+            "instagram": "Is happiness really worth it? 🤔 Let's chat about the balance! #DeepThoughts #Feelings"
+          },
+          "transcript_text": "Happiness is overrated. I'm just going to say that. And I'm going to keep it quick. Happiness is overrated because in order to be happy, I mean, in order for there to be happiness, there has to be sadness. I feel like it's just better to be peaceful. A couple of days ago, we interviewed a teenage band. It's not like, oh, I don't have words for this. It's more like there's literally no words to describe that feeling. It's like how we all are drawn to it. I think it's just hilarious how these old men are just like, I don't know, just writing down notes of what Billie Eilish is saying."
+        }
+      },
+      {
+        "json": {
+          "id": "JiVDULOdSlO7",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "name": "The impact of Billie Eilish's early music on her career",
+          "created_at": "2025-07-21T03:03:54.61+00:00",
+          "virality_score": 78,
+          "virality_score_explanation": "The video taps into the popular topic of Billie Eilish, which has a strong fanbase. The excitement and awe expressed by the speaker can resonate with viewers, creating an emotional connection. However, the content is somewhat niche and may not appeal to a broader audience, limiting its virality potential.",
+          "publication_captions": {
+            "tiktok": "🌊 Remember when Billie dropped 'Ocean Eyes' at 13? 😱 What a legend! 💚 #BillieEilish #MusicMagic",
+            "youtube": "Did Billie Eilish change the game at 13? 🌊✨ Dive into her early magic! #BillieEilish #OceanEyes",
+            "linkedin": "🌊 Remember when Billie dropped 'Ocean Eyes' at 13? 😱 What was your fave early jam? #BillieEilish #MusicMagic",
+            "instagram": "🌊 Remember when Billie dropped 'Ocean Eyes' at just 13? 😱 What a start! #BillieEilish #MusicMagic"
+          },
+          "transcript_text": "to the world's a little bit blurry billy i got 121 people in here say you swear say you swear we're tapped in worldwide when she when she was 13 billy eilish posted a song called ocean eyes online we all know that song right okay this is an intro to the documentary this is literally what with the i'm sorry i'm just like in awe bro Hold on. I think she directed the video. She directed the video. Oh my gosh, I can't just be like I can't just be like amazed that she bro She said you're gonna back up like this. I"
+        }
+      }
+    ],
+    "Export Shorts": [
+      {
+        "json": {
+          "id": "a23749a3-9263-44b8-92a9-c99860576b0b",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:06.684Z",
+          "project_id": "LLTWluE7zrv6",
+          "created_at": "2025-07-21T04:01:54.684Z",
+          "name": "The Complexity of Happiness vs. Peace",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "d5cc9ed2-a03c-48ee-b9d8-00b63b8ec2c0",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:25.665Z",
+          "project_id": "WE5TTAKjIHbc",
+          "created_at": "2025-07-21T04:01:54.665Z",
+          "name": "Cultural differences in public displays of affection",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "5ac41da5-47c9-4a25-9a6e-78e9da2f2544",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:27.669Z",
+          "project_id": "BtN5C3IfSdf6",
+          "created_at": "2025-07-21T04:01:54.669Z",
+          "name": "The complexity of happiness vs. sadness",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "c092a8fb-dbe7-4f76-91e1-646ad4bdbd0c",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:49.753Z",
+          "project_id": "JiVDULOdSlO7",
+          "created_at": "2025-07-21T04:01:54.753Z",
+          "name": "The impact of Billie Eilish's early music on her career",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      }
+    ],
+    "Wait1": [
+      {
+        "json": {
+          "id": "a23749a3-9263-44b8-92a9-c99860576b0b",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:06.684Z",
+          "project_id": "LLTWluE7zrv6",
+          "created_at": "2025-07-21T04:01:54.684Z",
+          "name": "The Complexity of Happiness vs. Peace",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "d5cc9ed2-a03c-48ee-b9d8-00b63b8ec2c0",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:25.665Z",
+          "project_id": "WE5TTAKjIHbc",
+          "created_at": "2025-07-21T04:01:54.665Z",
+          "name": "Cultural differences in public displays of affection",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "5ac41da5-47c9-4a25-9a6e-78e9da2f2544",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:27.669Z",
+          "project_id": "BtN5C3IfSdf6",
+          "created_at": "2025-07-21T04:01:54.669Z",
+          "name": "The complexity of happiness vs. sadness",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "c092a8fb-dbe7-4f76-91e1-646ad4bdbd0c",
+          "status": "processing",
+          "src_url": null,
+          "estimated_ready_at": "2025-07-21T04:02:49.753Z",
+          "project_id": "JiVDULOdSlO7",
+          "created_at": "2025-07-21T04:01:54.753Z",
+          "name": "The impact of Billie Eilish's early music on her career",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      }
+    ],
+    "Get Shorts": [
+      {
+        "json": {
+          "id": "a23749a3-9263-44b8-92a9-c99860576b0b",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/fAZnLwucX5JqFS0a.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:06.684Z",
+          "project_id": "LLTWluE7zrv6",
+          "created_at": "2025-07-21T04:01:54.684Z",
+          "finished_at": "2025-07-21T04:02:08.011Z",
+          "name": "The Complexity of Happiness vs. Peace",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "d5cc9ed2-a03c-48ee-b9d8-00b63b8ec2c0",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/orfqfwr0kxwHyZ7T.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:25.665Z",
+          "project_id": "WE5TTAKjIHbc",
+          "created_at": "2025-07-21T04:01:54.665Z",
+          "finished_at": "2025-07-21T04:02:22.925Z",
+          "name": "Cultural differences in public displays of affection",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "5ac41da5-47c9-4a25-9a6e-78e9da2f2544",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/q9FppRcVrECcrldA.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:27.669Z",
+          "project_id": "BtN5C3IfSdf6",
+          "created_at": "2025-07-21T04:01:54.669Z",
+          "finished_at": "2025-07-21T04:02:28.560Z",
+          "name": "The complexity of happiness vs. sadness",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "c092a8fb-dbe7-4f76-91e1-646ad4bdbd0c",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/4WTZNLoRaQzXOIiI.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:49.753Z",
+          "project_id": "JiVDULOdSlO7",
+          "created_at": "2025-07-21T04:01:54.753Z",
+          "finished_at": "2025-07-21T04:02:38.726Z",
+          "name": "The impact of Billie Eilish's early music on her career",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      }
+    ],
+    "If": [
+      {
+        "json": {
+          "id": "a23749a3-9263-44b8-92a9-c99860576b0b",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/fAZnLwucX5JqFS0a.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:06.684Z",
+          "project_id": "LLTWluE7zrv6",
+          "created_at": "2025-07-21T04:01:54.684Z",
+          "finished_at": "2025-07-21T04:02:08.011Z",
+          "name": "The Complexity of Happiness vs. Peace",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "d5cc9ed2-a03c-48ee-b9d8-00b63b8ec2c0",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/orfqfwr0kxwHyZ7T.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:25.665Z",
+          "project_id": "WE5TTAKjIHbc",
+          "created_at": "2025-07-21T04:01:54.665Z",
+          "finished_at": "2025-07-21T04:02:22.925Z",
+          "name": "Cultural differences in public displays of affection",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "5ac41da5-47c9-4a25-9a6e-78e9da2f2544",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/q9FppRcVrECcrldA.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:27.669Z",
+          "project_id": "BtN5C3IfSdf6",
+          "created_at": "2025-07-21T04:01:54.669Z",
+          "finished_at": "2025-07-21T04:02:28.560Z",
+          "name": "The complexity of happiness vs. sadness",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      },
+      {
+        "json": {
+          "id": "c092a8fb-dbe7-4f76-91e1-646ad4bdbd0c",
+          "status": "ready",
+          "src_url": "https://storage.googleapis.com/klap-renders/4WTZNLoRaQzXOIiI.mp4",
+          "estimated_ready_at": "2025-07-21T04:02:49.753Z",
+          "project_id": "JiVDULOdSlO7",
+          "created_at": "2025-07-21T04:01:54.753Z",
+          "finished_at": "2025-07-21T04:02:38.726Z",
+          "name": "The impact of Billie Eilish's early music on her career",
+          "author_id": "c868f38a-814d-407e-bb60-eca5e1dc9ea1",
+          "folder_id": "Rg039NYB",
+          "descriptions": null
+        }
+      }
+    ],
+    "Update Longform Status": [
+      {
+        "json": {
+          "production_status": "done",
+          "id": 7,
+          "date_produced": "2025-07-21"
+        }
+      },
+      {
+        "json": {
+          "production_status": "done",
+          "id": 7,
+          "date_produced": "2025-07-21"
+        }
+      },
+      {
+        "json": {
+          "production_status": "done",
+          "id": 7,
+          "date_produced": "2025-07-21"
+        }
+      },
+      {
+        "json": {
+          "production_status": "done",
+          "id": 7,
+          "date_produced": "2025-07-21"
+        }
+      }
+    ],
+    "Youtube Title": [
+      {
+        "json": {
+          "youtube_title": "Is happiness really all it's cracked up to be? 🤔 Let's talk peace instead! ✌️ #HappinessVsPeace\n"
+        }
+      },
+      {
+        "json": {
+          "youtube_title": "🤔 Is this PDA or just cultural differences? Let's discuss! 💋👇 #CulturalDifferences #PDA\n"
+        }
+      },
+      {
+        "json": {
+          "youtube_title": "Top Insights for Creators from Industry Leaders\n"
+        }
+      },
+      {
+        "json": {
+          "youtube_title": "Did Billie Eilish change the game at 13? 🌊✨ Dive into her early magic! #BillieEilish #OceanEyes\n"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get Longform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Longform": {
+      "main": [
+        [
+          {
+            "node": "Analyze Longform",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Analyze Longform": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Get Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Status": {
+      "main": [
+        [
+          {
+            "node": "Ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ready?": {
+      "main": [
+        [
+          {
+            "node": "Get Shorts Details",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shorts Details": {
+      "main": [
+        [
+          {
+            "node": "Youtube Title",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Export Shorts": {
+      "main": [
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait1": {
+      "main": [
+        [
+          {
+            "node": "Get Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Shorts": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Update Longform Status",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Longform Status": {
+      "main": [
+        [
+          {
+            "node": "Log Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Log Shorts": {
+      "main": [
+        [
+          {
+            "node": "Set Blotato IDs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Blotato IDs": {
+      "main": [
+        [
+          {
+            "node": "Load Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Load Shorts": {
+      "main": [
+        [
+          {
+            "node": "YOUTUBE",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "INSTAGRAM",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "TIKTOK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Youtube Title": {
+      "main": [
+        [
+          {
+            "node": "Export Shorts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TIKTOK": {
+      "main": [
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "aeb13ae4-3fa0-430f-8e90-5c756d1c558d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "3e1e0cc4d0c98a320903494be26e8fe98678290a4cb6b6103cf9a475eeda8b63"
+  },
+  "id": "Czj0F4bHRaqlh1KV",
+  "tags": []
+}
